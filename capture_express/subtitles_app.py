@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QPlainTextEdit,
     QProgressBar,
+    QScrollArea,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -67,7 +68,8 @@ class SubtitlesExpressWindow(QMainWindow):
         super().__init__()
         self.distribution_mode = distribution_mode
         self.setWindowTitle("Sous-titres Express")
-        self.resize(1080, 760)
+        self.resize(940, 700)
+        self.setMinimumSize(620, 460)
         self.video_path: Path | None = None
         self.output_dir: Path | None = None
         self.current_srt_path: Path | None = None
@@ -111,13 +113,16 @@ class SubtitlesExpressWindow(QMainWindow):
         top.addWidget(output_btn, 1, 2)
         layout.addLayout(top)
 
-        settings = QHBoxLayout()
-        settings.addWidget(self._provider_box(), 1)
+        settings = QVBoxLayout()
+        settings.setSpacing(10)
+        settings.addWidget(self._provider_box())
         self.local_box = self._local_box()
-        settings.addWidget(self.local_box, 1)
+        settings.addWidget(self.local_box)
         layout.addLayout(settings)
 
-        actions = QHBoxLayout()
+        actions = QGridLayout()
+        actions.setHorizontalSpacing(8)
+        actions.setVerticalSpacing(8)
         self.generate_btn = QPushButton("Generer les sous-titres")
         self.generate_btn.clicked.connect(self.generate_subtitles)
         self.open_srt_btn = QPushButton("Ouvrir un SRT")
@@ -128,14 +133,13 @@ class SubtitlesExpressWindow(QMainWindow):
         self.review_btn.clicked.connect(self.review_with_ollama)
         self.burn_btn = QPushButton("Assembler video + sous-titres")
         self.burn_btn.clicked.connect(self.burn_current_subtitles)
-        for button in (
-            self.generate_btn,
-            self.open_srt_btn,
-            self.save_srt_btn,
-            self.review_btn,
-            self.burn_btn,
-        ):
-            actions.addWidget(button)
+        actions.addWidget(self.generate_btn, 0, 0)
+        actions.addWidget(self.open_srt_btn, 0, 1)
+        actions.addWidget(self.save_srt_btn, 0, 2)
+        actions.addWidget(self.review_btn, 1, 0)
+        actions.addWidget(self.burn_btn, 1, 1, 1, 2)
+        for column in range(3):
+            actions.setColumnStretch(column, 1)
         layout.addLayout(actions)
 
         self.progress = QProgressBar()
@@ -156,7 +160,11 @@ class SubtitlesExpressWindow(QMainWindow):
         tabs.addTab(self.notes_editor, "Moteurs")
         layout.addWidget(tabs, 1)
 
-        self.setCentralWidget(root)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(root)
+        self.setCentralWidget(scroll)
 
     def _provider_box(self) -> QGroupBox:
         box = QGroupBox("Moteur de creation")

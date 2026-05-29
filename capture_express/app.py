@@ -27,6 +27,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QProgressDialog,
+    QScrollArea,
     QSpinBox,
     QStyle,
     QTextEdit,
@@ -63,7 +64,7 @@ class CaptureExpressWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("NB Capture")
         self.resize(820, 540)
-        self.setMinimumWidth(860)
+        self.setMinimumSize(620, 460)
         self.session: CaptureExpressSession | None = None
         self.overlay: FloatingCaptureMenu | None = None
         self.region_overlay: RegionOverlay | None = None
@@ -137,14 +138,14 @@ class CaptureExpressWindow(QMainWindow):
         settings_layout.setColumnStretch(1, 1)
         settings_layout.setColumnStretch(3, 1)
         self.source_combo = QComboBox()
-        self.source_combo.setMinimumWidth(210)
+        self.source_combo.setMinimumWidth(150)
         self.source_combo.addItem("Ecran sous la souris", "screen")
         self.source_combo.addItem("Fenetre choisie", "window")
         self.source_combo.addItem("Zone libre avec Ctrl + glisser", "free_zone")
         self.source_combo.currentIndexChanged.connect(self._sync_capture_source_controls)
         self.window_label = QLabel("Fenetre")
         self.window_combo = QComboBox()
-        self.window_combo.setMinimumWidth(260)
+        self.window_combo.setMinimumWidth(150)
         self.refresh_windows_btn = self._icon_button("Rafraichir la liste des fenetres")
         self.refresh_windows_btn.clicked.connect(
             lambda: self._run_refresh_action(self.refresh_windows_btn, self._populate_window_combo)
@@ -213,7 +214,7 @@ class CaptureExpressWindow(QMainWindow):
         self.audio_check.stateChanged.connect(self._sync_option_visibility)
         self.audio_label = QLabel("Micro")
         self.audio_device_input = QComboBox()
-        self.audio_device_input.setMinimumWidth(220)
+        self.audio_device_input.setMinimumWidth(150)
         self.audio_device_input.setEditable(True)
         self.refresh_audio_btn = self._icon_button("Detecter les micros")
         self.refresh_audio_btn.clicked.connect(
@@ -224,7 +225,7 @@ class CaptureExpressWindow(QMainWindow):
         self.webcam_check.stateChanged.connect(self._sync_option_visibility)
         self.webcam_label = QLabel("Webcam")
         self.webcam_device_input = QComboBox()
-        self.webcam_device_input.setMinimumWidth(220)
+        self.webcam_device_input.setMinimumWidth(150)
         self.webcam_device_input.setEditable(True)
         self.refresh_webcam_btn = self._icon_button("Detecter les webcams")
         self.refresh_webcam_btn.clicked.connect(
@@ -335,7 +336,11 @@ class CaptureExpressWindow(QMainWindow):
             QLineEdit, QComboBox, QSpinBox { padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; color: #111827; background: #ffffff; }
             """
         )
-        self.setCentralWidget(root)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(root)
+        self.setCentralWidget(scroll)
 
     def _icon_button(self, tooltip: str) -> QPushButton:
         button = QPushButton()
