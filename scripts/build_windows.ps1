@@ -23,6 +23,11 @@ $entrypoint = switch ($App) {
     "subtitles-github" { "launch_subtitles_express.py" }
 }
 
+$iconPath = switch ($App) {
+    "capture" { Join-Path $repoRoot "capture_express\assets\nb_capture.ico" }
+    default { Join-Path $repoRoot "capture_express\assets\nb_subtitles.ico" }
+}
+
 if ($Name -eq "NBCapture" -and $App -ne "capture") {
     $Name = if ($App -eq "subtitles-cloud") { "SousTitresExpress" } else { "SousTitresExpress-GitHub" }
 }
@@ -39,9 +44,19 @@ $pyinstallerArgs = @(
     "--workpath",
     $buildDir,
     "--specpath",
-    $buildDir,
-    $entrypoint
+    $buildDir
 )
+
+if (Test-Path $iconPath) {
+    $pyinstallerArgs += @("--icon", $iconPath)
+}
+
+$assetsDir = Join-Path $repoRoot "capture_express\assets"
+if (Test-Path $assetsDir) {
+    $pyinstallerArgs += @("--add-data", "$assetsDir;capture_express/assets")
+}
+
+$pyinstallerArgs += $entrypoint
 
 $ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
 if ($ffmpeg) {

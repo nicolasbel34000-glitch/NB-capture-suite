@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable
 
 from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -48,6 +49,14 @@ from .windowing import configure_process_dpi_awareness
 KEYRING_SERVICE = "Sous-titres Express"
 
 
+def _asset_path(name: str) -> Path:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+    packaged = base / "capture_express" / "assets" / name
+    if packaged.exists():
+        return packaged
+    return Path(__file__).resolve().parent / "assets" / name
+
+
 class Worker(QThread):
     succeeded = pyqtSignal(object)
     failed = pyqtSignal(str)
@@ -69,6 +78,7 @@ class SubtitlesExpressWindow(QMainWindow):
         super().__init__()
         self.distribution_mode = distribution_mode
         self.setWindowTitle("Sous-titres Express")
+        self.setWindowIcon(QIcon(str(_asset_path("nb_subtitles.ico"))))
         self.resize(940, 700)
         self.setMinimumSize(620, 460)
         self.video_path: Path | None = None

@@ -60,10 +60,19 @@ from .windowing import (
 )
 
 
+def _asset_path(name: str) -> Path:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+    packaged = base / "capture_express" / "assets" / name
+    if packaged.exists():
+        return packaged
+    return Path(__file__).resolve().parent / "assets" / name
+
+
 class CaptureExpressWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("NB Capture")
+        self.setWindowIcon(QIcon(str(_asset_path("nb_capture.ico"))))
         self.resize(820, 540)
         self.setMinimumSize(620, 460)
         self.session: CaptureExpressSession | None = None
