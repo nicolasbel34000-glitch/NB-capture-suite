@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: python -m unittest discover -s tests
+
+      - name: Build NB Capture
+        run: powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -App capture -Name NBCapture
+
+      - name: Build NB Sous-titres
+        run: powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -App subtitles-cloud -Name NBSousTitres
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nb-capture-suite-windows
+          path: release/*.exe

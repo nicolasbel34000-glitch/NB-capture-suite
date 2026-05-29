@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa
+id_ed25519
+
+# Build and release outputs
+build/
+dist/
+release/
+github-share/
+OLD/
+*.spec
+!packaging/*.spec
+*.ffmpeg.log
+
+# Capture Express generated sessions
+runs/
+session-*/
+test/session-*/
+
+# Local orchestration runtime output
+state/
+handoffs/
+reports/
+
+# Node / Playwright local output
+qa/playwright/node_modules/
+qa/playwright/test-results/
+qa/playwright/playwright-report/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
