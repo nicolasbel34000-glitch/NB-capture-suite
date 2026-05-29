@@ -1,6 +1,6 @@
 PyQt6>=6.7
 mss>=10.0
-Pillow>=11.0
+Pillow>=12.2.0
 PyAutoGUI>=0.9.54
 requests>=2.32
 keyring>=25.0
