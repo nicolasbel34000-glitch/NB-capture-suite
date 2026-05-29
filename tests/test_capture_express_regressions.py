@@ -357,7 +357,7 @@ class CaptureExpressRegressionTests(unittest.TestCase):
                 mock.patch.object(media_module.sys, "executable", str(meipass / "CaptureExpress.exe")),
                 mock.patch.object(media_module.shutil, "which", return_value=None),
             ):
-                self.assertEqual(media_module.resolve_ffmpeg_bin(), str(ffmpeg))
+                self.assertEqual(Path(media_module.resolve_ffmpeg_bin() or "").resolve(), ffmpeg.resolve())
 
     def test_frozen_app_resolves_ffmpeg_next_to_executable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -369,7 +369,7 @@ class CaptureExpressRegressionTests(unittest.TestCase):
                 mock.patch.object(media_module.sys, "executable", str(exe_dir / "CaptureExpress.exe")),
                 mock.patch.object(media_module.shutil, "which", return_value=None),
             ):
-                self.assertEqual(media_module.resolve_ffmpeg_bin(), str(ffmpeg))
+                self.assertEqual(Path(media_module.resolve_ffmpeg_bin() or "").resolve(), ffmpeg.resolve())
 
     def test_ffmpeg_8_directshow_device_format_is_parsed(self) -> None:
         output = '''
