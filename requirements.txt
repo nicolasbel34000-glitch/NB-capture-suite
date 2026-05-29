@@ -1,4 +1,4 @@
-PyQt6>=6.7
+PyQt6>=6.11.0
 mss>=10.0
 Pillow>=11.0
 PyAutoGUI>=0.9.54
