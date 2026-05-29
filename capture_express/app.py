@@ -128,6 +128,7 @@ class CaptureExpressWindow(QMainWindow):
         layout.addWidget(title)
 
         form = QGroupBox("Session")
+        form.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         form_layout = QGridLayout(form)
         form_layout.setSpacing(8)
         self.output_input = QLineEdit(str((Path.cwd() / "runs" / "capture-express").resolve()))
@@ -143,6 +144,7 @@ class CaptureExpressWindow(QMainWindow):
         layout.addWidget(form)
 
         settings = QGroupBox("Format et capture")
+        settings.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         settings_layout = QGridLayout(settings)
         settings_layout.setHorizontalSpacing(12)
         settings_layout.setVerticalSpacing(8)
@@ -278,6 +280,7 @@ class CaptureExpressWindow(QMainWindow):
         settings_layout.addWidget(self.webcam_check, 10, 0, 1, 2)
         settings_layout.addWidget(self.webcam_label, 10, 2)
         settings_layout.addWidget(self.webcam_picker, 10, 3)
+        settings.setMinimumHeight(settings.sizeHint().height())
         layout.addWidget(settings)
         self._populate_window_combo()
         self._populate_audio_devices()
@@ -285,6 +288,7 @@ class CaptureExpressWindow(QMainWindow):
         self._sync_capture_source_controls()
 
         script = QGroupBox("Script video (Optionnel)")
+        script.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         script_layout = QVBoxLayout(script)
         toolbar = QHBoxLayout()
         bold_btn = QPushButton("B")
@@ -317,6 +321,7 @@ class CaptureExpressWindow(QMainWindow):
         script_layout.addLayout(toolbar)
         script_layout.addWidget(self.script_input)
         script_layout.addWidget(self.show_script_check)
+        script.setMinimumHeight(script.sizeHint().height())
         layout.addWidget(script)
 
         shortcuts = QLabel(
@@ -326,6 +331,7 @@ class CaptureExpressWindow(QMainWindow):
             "Espace pendant REC: pause/reprise | Echap: stop"
         )
         shortcuts.setWordWrap(True)
+        shortcuts.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         shortcuts.setStyleSheet("color: #475569;")
         layout.addWidget(shortcuts)
 
@@ -341,6 +347,7 @@ class CaptureExpressWindow(QMainWindow):
         buttons.addStretch(1)
         buttons.addWidget(quit_btn)
         layout.addLayout(buttons)
+        layout.addStretch(1)
 
         root.setStyleSheet(
             """
@@ -355,9 +362,13 @@ class CaptureExpressWindow(QMainWindow):
         )
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setWidget(root)
         self.setCentralWidget(scroll)
+        root.setMinimumWidth(760)
+        root.adjustSize()
 
     def _icon_button(self, tooltip: str) -> QPushButton:
         button = QPushButton()
