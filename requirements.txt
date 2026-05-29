@@ -1,5 +1,5 @@
 PyQt6>=6.7
-mss>=10.0
+mss>=10.2.0
 Pillow>=11.0
 PyAutoGUI>=0.9.54
 requests>=2.32
