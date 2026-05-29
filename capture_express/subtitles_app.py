@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -100,10 +101,12 @@ class SubtitlesExpressWindow(QMainWindow):
         self.video_field = QLineEdit()
         self.video_field.setReadOnly(True)
         browse_btn = QPushButton("Choisir video")
+        self._stabilize_button(browse_btn)
         browse_btn.clicked.connect(self.choose_video)
         self.output_field = QLineEdit()
         self.output_field.setReadOnly(True)
         output_btn = QPushButton("Dossier sortie")
+        self._stabilize_button(output_btn)
         output_btn.clicked.connect(self.choose_output_dir)
         top.addWidget(QLabel("Video"), 0, 0)
         top.addWidget(self.video_field, 0, 1)
@@ -140,6 +143,14 @@ class SubtitlesExpressWindow(QMainWindow):
         actions.addWidget(self.burn_btn, 1, 1, 1, 2)
         for column in range(3):
             actions.setColumnStretch(column, 1)
+        for button in (
+            self.generate_btn,
+            self.open_srt_btn,
+            self.save_srt_btn,
+            self.review_btn,
+            self.burn_btn,
+        ):
+            self._stabilize_button(button)
         layout.addLayout(actions)
 
         self.progress = QProgressBar()
@@ -489,10 +500,14 @@ class SubtitlesExpressWindow(QMainWindow):
             #subtitle { color: #555; }
             #status { color: #333; }
             QPlainTextEdit { font-family: Consolas, monospace; font-size: 13px; }
-            QPushButton { padding: 8px 10px; }
+            QPushButton { padding: 8px 10px; min-height: 34px; }
             QGroupBox { font-weight: 600; }
             """
         )
+
+    def _stabilize_button(self, button: QPushButton) -> None:
+        button.setMinimumHeight(38)
+        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
 
 def main(distribution_mode: str | None = None) -> int:

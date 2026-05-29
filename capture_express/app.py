@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QProgressDialog,
     QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QStyle,
     QTextEdit,
@@ -122,6 +123,7 @@ class CaptureExpressWindow(QMainWindow):
         form_layout.setSpacing(8)
         self.output_input = QLineEdit(str((Path.cwd() / "runs" / "capture-express").resolve()))
         browse_btn = QPushButton("Choisir")
+        self._stabilize_button(browse_btn)
         browse_btn.clicked.connect(self._choose_output_dir)
         self.title_input = QLineEdit("capture")
         form_layout.addWidget(QLabel("Dossier des captures"), 0, 0)
@@ -172,6 +174,7 @@ class CaptureExpressWindow(QMainWindow):
         self.logo_path_input = QLineEdit()
         self.logo_path_input.setPlaceholderText("PNG/JPG")
         self.logo_browse_btn = QPushButton("Choisir")
+        self._stabilize_button(self.logo_browse_btn)
         self.logo_browse_btn.clicked.connect(self._choose_logo)
         self.logo_picker = self._combo_with_icon(self.logo_path_input, self.logo_browse_btn)
         self.logo_position_combo = QComboBox()
@@ -179,8 +182,10 @@ class CaptureExpressWindow(QMainWindow):
         self.logo_position_combo.addItem("Haut droite", "top_right")
         self.logo_position_label = QLabel("Position logo")
         self.annotation_text_color_btn = QPushButton("Texte")
+        self._stabilize_button(self.annotation_text_color_btn)
         self.annotation_text_color_btn.clicked.connect(self._choose_annotation_text_color)
         self.annotation_highlight_color_btn = QPushButton("Surligneur")
+        self._stabilize_button(self.annotation_highlight_color_btn)
         self.annotation_highlight_color_btn.clicked.connect(self._choose_annotation_highlight_color)
         annotation_color_row = QHBoxLayout()
         annotation_color_row.setContentsMargins(0, 0, 0, 0)
@@ -280,6 +285,7 @@ class CaptureExpressWindow(QMainWindow):
         bigger_btn = QPushButton("A+")
         smaller_btn = QPushButton("A-")
         for btn in (bold_btn, italic_btn, underline_btn, color_btn, bigger_btn, smaller_btn):
+            self._stabilize_button(btn, compact=True)
             toolbar.addWidget(btn)
         toolbar.addStretch(1)
         self.script_input = QTextEdit()
@@ -316,9 +322,11 @@ class CaptureExpressWindow(QMainWindow):
 
         buttons = QHBoxLayout()
         start_btn = QPushButton("Lancer mode capture active")
+        self._stabilize_button(start_btn)
         start_btn.setObjectName("primary")
         start_btn.clicked.connect(self.start_capture_mode)
         quit_btn = QPushButton("Quitter")
+        self._stabilize_button(quit_btn)
         quit_btn.clicked.connect(self.close)
         buttons.addWidget(start_btn)
         buttons.addStretch(1)
@@ -330,7 +338,7 @@ class CaptureExpressWindow(QMainWindow):
             QWidget { background: #ffffff; color: #111827; font-family: Segoe UI, Arial; font-size: 13px; }
             QGroupBox { background: #ffffff; color: #111827; font-weight: 700; border: 1px solid #d8dee9; border-radius: 6px; margin-top: 8px; padding: 10px; }
             QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; }
-            QPushButton { padding: 7px 12px; border-radius: 5px; border: 1px solid #94a3b8; background: #ffffff; color: #111827; }
+            QPushButton { padding: 7px 12px; min-height: 32px; border-radius: 5px; border: 1px solid #94a3b8; background: #ffffff; color: #111827; }
             QPushButton:hover { background: #f1f5f9; }
             QPushButton#primary { background: #2563eb; color: white; border-color: #1d4ed8; font-weight: 700; }
             QLineEdit, QComboBox, QSpinBox { padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; color: #111827; background: #ffffff; }
@@ -366,6 +374,10 @@ class CaptureExpressWindow(QMainWindow):
             """
         )
         return button
+
+    def _stabilize_button(self, button: QPushButton, *, compact: bool = False) -> None:
+        button.setMinimumHeight(30 if compact else 36)
+        button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
 
     def _combo_with_icon(self, combo: QComboBox, button: QPushButton) -> QWidget:
         wrapper = QWidget()
