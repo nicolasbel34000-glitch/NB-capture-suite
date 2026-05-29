@@ -3,4 +3,4 @@ mss>=10.0
 Pillow>=11.0
 PyAutoGUI>=0.9.54
 requests>=2.32
-keyring>=25.0
+keyring>=25.7.0
