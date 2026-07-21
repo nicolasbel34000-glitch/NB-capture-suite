@@ -25,6 +25,7 @@ from capture_express.media import (
     _build_finalize_command,
     _build_multitrack_finalize_command,
     _cap_screen_fps,
+    _encoder_is_usable,
     _live_encoder_for_tier,
     _parse_directshow_devices,
     _resolve_dshow_device,
@@ -284,6 +285,23 @@ class CaptureExpressRegressionTests(unittest.TestCase):
         encoder = _live_encoder_for_tier(tier, encoders, gpu_names)
         self.assertEqual(tier, "cpu")
         self.assertEqual(encoder.name, "libx264")
+
+    def test_hardware_encoder_preflight_detects_missing_driver(self) -> None:
+        encoder = VideoEncoder("h264_nvenc", ["-preset", "p5"])
+        with mock.patch.object(media_module.subprocess, "run", return_value=SimpleNamespace(returncode=1)) as run:
+            self.assertFalse(_encoder_is_usable("ffmpeg", encoder))
+        self.assertIn("h264_nvenc", run.call_args.args[0])
+
+    def test_hardware_profile_falls_back_to_cpu_when_preflight_fails(self) -> None:
+        encoder_listing = SimpleNamespace(stdout=" V..... h264_qsv\n", returncode=0)
+        failed_preflight = SimpleNamespace(returncode=1)
+        with (
+            mock.patch.object(media_module, "_list_windows_gpu_names", return_value=["Intel Iris Xe"]),
+            mock.patch.object(media_module.subprocess, "run", side_effect=[encoder_listing, failed_preflight]),
+        ):
+            profile = media_module.probe_hardware_profile("ffmpeg")
+        self.assertEqual(profile.tier, "cpu")
+        self.assertEqual(profile.live_encoder.name, "libx264")
 
     def test_classify_gpu_tier_falls_back_to_cpu_without_encoders(self) -> None:
         tier = classify_gpu_tier(["Microsoft Basic Display Adapter"], "")

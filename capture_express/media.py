@@ -295,6 +295,42 @@ def _hardware_summary(tier: Literal["cpu", "integrated", "dedicated"], gpu_name:
     return f"{tier_labels[tier]} ({gpu_part}, {encoder.name})"
 
 
+def _encoder_is_usable(ffmpeg: str, encoder: VideoEncoder) -> bool:
+    """Validate a hardware encoder against the installed driver, not only FFmpeg's encoder list."""
+    if encoder.name == "libx264":
+        return True
+    cmd = [
+        ffmpeg,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        "color=c=black:s=128x128:r=1:d=0.1",
+        "-frames:v",
+        "1",
+        "-an",
+        "-c:v",
+        encoder.name,
+        *encoder.options,
+        "-f",
+        "null",
+        "-",
+    ]
+    try:
+        completed = subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            timeout=10,
+            check=False,
+        )
+    except Exception:
+        return False
+    return completed.returncode == 0
+
+
 def probe_hardware_profile(ffmpeg: str | None = None) -> HardwareProfile:
     global _HARDWARE_PROFILE_CACHE
     if _HARDWARE_PROFILE_CACHE is not None:
@@ -320,6 +356,12 @@ def probe_hardware_profile(ffmpeg: str | None = None) -> HardwareProfile:
     primary_gpu = gpu_names[0] if gpu_names else "CPU"
     tier = classify_gpu_tier(gpu_names, encoders_output)
     live_encoder = _live_encoder_for_tier(tier, encoders_output, gpu_names)
+    if binary is None or not _encoder_is_usable(binary, live_encoder):
+        tier = "cpu"
+        live_encoder = VideoEncoder(
+            "libx264",
+            ["-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p"],
+        )
     _HARDWARE_PROFILE_CACHE = HardwareProfile(
         tier=tier,
         gpu_name=primary_gpu,
