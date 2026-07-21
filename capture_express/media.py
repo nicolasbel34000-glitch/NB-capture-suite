@@ -209,8 +209,6 @@ class HardwareProfile:
 _HARDWARE_PROFILE_CACHE: HardwareProfile | None = None
 
 _INTEGRATED_GPU_MARKERS = ("intel", "uhd", "iris", "arc")
-_DEDICATED_GPU_MARKERS = ("nvidia", "geforce", "rtx", "gtx", "quadro", "radeon rx", "amd radeon")
-_BASIC_GPU_MARKERS = ("microsoft basic", "remote", "virtual", "parallels", "vmware")
 
 
 def reset_hardware_profile_cache() -> None:
@@ -246,37 +244,42 @@ def classify_gpu_tier(gpu_names: list[str], encoders_output: str) -> Literal["cp
     has_nvenc = "h264_nvenc" in encoders
     has_qsv = "h264_qsv" in encoders
     has_amf = "h264_amf" in encoders
-    non_basic = [name for name in gpu_names if not any(marker in name.lower() for marker in _BASIC_GPU_MARKERS)]
+    has_nvidia_gpu = any(marker in names_blob for marker in ("nvidia", "geforce", "rtx", "gtx", "quadro"))
+    has_amd_gpu = "amd" in names_blob or "radeon" in names_blob
+    has_intel_gpu = any(marker in names_blob for marker in _INTEGRATED_GPU_MARKERS)
 
-    if has_nvenc and any(marker in names_blob for marker in _DEDICATED_GPU_MARKERS):
+    if has_nvenc and has_nvidia_gpu:
         return "dedicated"
-    if has_amf and "radeon" in names_blob:
+    if has_amf and has_amd_gpu:
         return "dedicated"
-    if has_nvenc or has_amf:
-        return "dedicated"
-    if has_qsv or any(marker in names_blob for marker in _INTEGRATED_GPU_MARKERS):
-        return "integrated"
-    if not non_basic:
-        return "cpu"
-    if any(marker in names_blob for marker in _DEDICATED_GPU_MARKERS):
+    if has_qsv and has_intel_gpu:
         return "integrated"
     return "cpu"
 
 
-def _live_encoder_for_tier(tier: Literal["cpu", "integrated", "dedicated"], encoders_output: str) -> VideoEncoder:
+def _live_encoder_for_tier(
+    tier: Literal["cpu", "integrated", "dedicated"],
+    encoders_output: str,
+    gpu_names: list[str] | None = None,
+) -> VideoEncoder:
     encoders = encoders_output.lower()
+    names_blob = " ".join(gpu_names or []).lower()
     if tier == "dedicated":
-        if "h264_nvenc" in encoders:
+        if "h264_nvenc" in encoders and any(
+            marker in names_blob for marker in ("nvidia", "geforce", "rtx", "gtx", "quadro")
+        ):
             return VideoEncoder(
                 "h264_nvenc",
                 ["-preset", "p5", "-rc", "vbr", "-cq", "17", "-b:v", "0", "-pix_fmt", "yuv420p"],
             )
-        if "h264_amf" in encoders:
+        if "h264_amf" in encoders and ("amd" in names_blob or "radeon" in names_blob):
             return VideoEncoder(
                 "h264_amf",
                 ["-quality", "quality", "-rc", "cqp", "-qp_i", "17", "-qp_p", "17", "-pix_fmt", "yuv420p"],
             )
-    if tier == "integrated" and "h264_qsv" in encoders:
+    if tier == "integrated" and "h264_qsv" in encoders and any(
+        marker in names_blob for marker in _INTEGRATED_GPU_MARKERS
+    ):
         return VideoEncoder("h264_qsv", ["-global_quality", "22", "-pix_fmt", "yuv420p"])
     crf = "20" if tier == "cpu" else "18"
     return VideoEncoder("libx264", ["-preset", "veryfast", "-crf", crf, "-pix_fmt", "yuv420p"])
@@ -316,7 +319,7 @@ def probe_hardware_profile(ffmpeg: str | None = None) -> HardwareProfile:
     gpu_names = _list_windows_gpu_names()
     primary_gpu = gpu_names[0] if gpu_names else "CPU"
     tier = classify_gpu_tier(gpu_names, encoders_output)
-    live_encoder = _live_encoder_for_tier(tier, encoders_output)
+    live_encoder = _live_encoder_for_tier(tier, encoders_output, gpu_names)
     _HARDWARE_PROFILE_CACHE = HardwareProfile(
         tier=tier,
         gpu_name=primary_gpu,

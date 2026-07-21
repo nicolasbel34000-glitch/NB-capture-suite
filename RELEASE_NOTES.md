@@ -1,8 +1,8 @@
 # Release Notes
 
-## NB Capture Suite v0.1.2-beta
+## NB Capture Suite v0.1.3-beta
 
-Recommended tag: `v0.1.2`
+Recommended tag: `v0.1.3`
 
 Status: beta
 

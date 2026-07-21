@@ -25,6 +25,7 @@ from capture_express.media import (
     _build_finalize_command,
     _build_multitrack_finalize_command,
     _cap_screen_fps,
+    _live_encoder_for_tier,
     _parse_directshow_devices,
     _resolve_dshow_device,
     apply_logo_to_image,
@@ -267,6 +268,22 @@ class CaptureExpressRegressionTests(unittest.TestCase):
     def test_classify_gpu_tier_detects_dedicated_nvidia(self) -> None:
         tier = classify_gpu_tier(["NVIDIA GeForce RTX 3070"], " V..... h264_nvenc")
         self.assertEqual(tier, "dedicated")
+
+    def test_intel_gpu_never_selects_nvenc_from_ffmpeg_build(self) -> None:
+        encoders = " V..... h264_nvenc\n V..... h264_qsv\n V..... h264_amf"
+        gpu_names = ["Intel(R) Iris(R) Xe Graphics"]
+        tier = classify_gpu_tier(gpu_names, encoders)
+        encoder = _live_encoder_for_tier(tier, encoders, gpu_names)
+        self.assertEqual(tier, "integrated")
+        self.assertEqual(encoder.name, "h264_qsv")
+
+    def test_intel_without_qsv_falls_back_to_cpu_encoder(self) -> None:
+        encoders = " V..... h264_nvenc\n V..... h264_amf"
+        gpu_names = ["Intel(R) Iris(R) Xe Graphics"]
+        tier = classify_gpu_tier(gpu_names, encoders)
+        encoder = _live_encoder_for_tier(tier, encoders, gpu_names)
+        self.assertEqual(tier, "cpu")
+        self.assertEqual(encoder.name, "libx264")
 
     def test_classify_gpu_tier_falls_back_to_cpu_without_encoders(self) -> None:
         tier = classify_gpu_tier(["Microsoft Basic Display Adapter"], "")
