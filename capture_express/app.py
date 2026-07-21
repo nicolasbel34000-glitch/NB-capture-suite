@@ -68,6 +68,11 @@ def _asset_path(name: str) -> Path:
     return Path(__file__).resolve().parent / "assets" / name
 
 
+def _audio_capture_requested(*, audio_enabled: bool, with_audio: bool) -> bool:
+    """Only the explicit Video + son action is allowed to request a microphone."""
+    return audio_enabled and with_audio
+
+
 class CaptureExpressWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
@@ -562,7 +567,10 @@ class CaptureExpressWindow(QMainWindow):
     def start_video(self, *, with_audio: bool, source: str) -> None:
         if not self.capture_active or self.session is None or self.active_recorder is not None:
             return
-        audio_requested = self.session.config.audio_enabled and (with_audio or source == "toggle")
+        audio_requested = _audio_capture_requested(
+            audio_enabled=self.session.config.audio_enabled,
+            with_audio=with_audio,
+        )
         webcam_requested = self.session.config.webcam_enabled and source != "space_hold"
         artifact_id, path = self.session.next_video_path(with_audio=audio_requested)
         recorder_region = self.session.capture_region

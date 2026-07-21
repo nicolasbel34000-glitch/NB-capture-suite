@@ -497,7 +497,7 @@ class ClipRecorder:
         self._paused_at = 0.0
         self._paused_total = 0.0
         self._processes = self._launch_all()
-        time.sleep(0.3)
+        time.sleep(1.0)
         if not self._failed_processes():
             return
         details = self._tail_log()
@@ -520,7 +520,7 @@ class ClipRecorder:
                 notes=f"{self.hardware_profile.summary} | @{self.live_plan.screen_fps} fps",
             )
             self._processes = self._launch_all()
-            time.sleep(0.3)
+            time.sleep(1.0)
             if not self._failed_processes():
                 return
             details = self._tail_log()
@@ -536,7 +536,7 @@ class ClipRecorder:
             )
             self.ffmpeg_log_path = self._primary_log_path()
             self._processes = self._launch_all()
-            time.sleep(0.3)
+            time.sleep(1.0)
             if not self._failed_processes():
                 return
             details = self._tail_log()
@@ -544,7 +544,7 @@ class ClipRecorder:
         if self.with_audio:
             self.with_audio = False
             self._processes = self._launch_all()
-            time.sleep(0.3)
+            time.sleep(1.0)
             if not self._failed_processes():
                 return
         raise RuntimeError(f"ffmpeg failed to start capture.\n{details}")

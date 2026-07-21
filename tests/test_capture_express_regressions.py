@@ -15,7 +15,7 @@ from PIL import Image
 
 import capture_express.app as app_module
 import capture_express.media as media_module
-from capture_express.app import CaptureExpressWindow, FloatingCaptureMenu, RegionOverlay
+from capture_express.app import CaptureExpressWindow, FloatingCaptureMenu, RegionOverlay, _audio_capture_requested
 from capture_express.media import (
     ClipRecorder,
     HardwareProfile,
@@ -70,6 +70,10 @@ class CaptureExpressRegressionTests(unittest.TestCase):
 
             self.assertEqual(left.getpixel((10, 10)), (255, 0, 0))
             self.assertEqual(right.getpixel((180, 10)), (255, 0, 0))
+
+    def test_regular_video_does_not_enable_microphone(self) -> None:
+        self.assertFalse(_audio_capture_requested(audio_enabled=True, with_audio=False))
+        self.assertTrue(_audio_capture_requested(audio_enabled=True, with_audio=True))
 
     def test_region_preview_converts_both_physical_corners(self) -> None:
         _app()
