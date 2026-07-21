@@ -1747,9 +1747,18 @@ class RegionOverlay(QWidget):
         color = QColor(37, 99, 235, 210 if self.fixed else 150)
         pen = QPen(color, 3)
         painter.setPen(pen)
-        x, y = self._to_local(self.region.left, self.region.top)
-        painter.drawRect(x, y, self.region.width, self.region.height)
+        painter.drawRect(self._local_region_rect(self.region))
         painter.end()
+
+    def _local_region_rect(self, region: CaptureRegion) -> QRect:
+        top_left = self._to_local(region.left, region.top)
+        bottom_right = self._to_local(region.left + region.width, region.top + region.height)
+        return QRect(
+            min(top_left[0], bottom_right[0]),
+            min(top_left[1], bottom_right[1]),
+            abs(bottom_right[0] - top_left[0]),
+            abs(bottom_right[1] - top_left[1]),
+        )
 
     def _to_local(self, x: int, y: int) -> tuple[int, int]:
         geom = self.geometry()

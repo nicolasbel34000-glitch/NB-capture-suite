@@ -502,6 +502,29 @@ class ClipRecorder:
             return
         details = self._tail_log()
         self.stop(force=True)
+        if self.hardware_profile.live_encoder.name != "libx264":
+            failed_encoder = self.hardware_profile.live_encoder.name
+            self.hardware_profile = HardwareProfile(
+                tier="cpu",
+                gpu_name=self.hardware_profile.gpu_name,
+                live_encoder=VideoEncoder(
+                    "libx264",
+                    ["-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p"],
+                ),
+                summary=f"Repli CPU apres echec de {failed_encoder}",
+            )
+            self.live_plan = LiveRecordingPlan(
+                screen_fps=self.live_plan.screen_fps,
+                webcam_mode=self.live_plan.webcam_mode,
+                overlay_width=self.live_plan.overlay_width,
+                notes=f"{self.hardware_profile.summary} | @{self.live_plan.screen_fps} fps",
+            )
+            self._processes = self._launch_all()
+            time.sleep(0.3)
+            if not self._failed_processes():
+                return
+            details = self._tail_log()
+            self.stop(force=True)
         if self.recording_mode == "multitrack" and self.with_webcam:
             self.with_webcam = False
             self.recording_mode = "single"
@@ -821,12 +844,12 @@ def resolve_ffmpeg_bin() -> str | None:
         app_dir = Path(__file__).resolve().parent
     cwd = Path.cwd()
     candidates = [
-        cwd / "ffmpeg.exe",
-        cwd / "bin" / "ffmpeg" / "ffmpeg.exe",
-        cwd / "bin" / "ffmpeg" / "bin" / "ffmpeg.exe",
         app_dir / "ffmpeg.exe",
         app_dir / "bin" / "ffmpeg" / "ffmpeg.exe",
         app_dir / "bin" / "ffmpeg" / "bin" / "ffmpeg.exe",
+        cwd / "ffmpeg.exe",
+        cwd / "bin" / "ffmpeg" / "ffmpeg.exe",
+        cwd / "bin" / "ffmpeg" / "bin" / "ffmpeg.exe",
         Path(__file__).resolve().parent / "bin" / "ffmpeg" / "ffmpeg.exe",
         Path(__file__).resolve().parent / "bin" / "ffmpeg" / "bin" / "ffmpeg.exe",
     ]

@@ -58,12 +58,19 @@ if (Test-Path $assetsDir) {
 
 $pyinstallerArgs += $entrypoint
 
-$ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
-if ($ffmpeg) {
-    $pyinstallerArgs += @("--add-binary", "$($ffmpeg.Source);.")
-    Write-Host "Bundling ffmpeg.exe inside the executable."
+$bundledFfmpeg = Join-Path $repoRoot "bin\ffmpeg\ffmpeg.exe"
+$ffmpegPath = if (Test-Path -LiteralPath $bundledFfmpeg) {
+    $bundledFfmpeg
 } else {
-    Write-Warning "ffmpeg.exe was not found on PATH. Video, audio, and webcam capture require ffmpeg."
+    $ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
+    if ($ffmpeg) { $ffmpeg.Source } else { $null }
+}
+
+if ($ffmpegPath) {
+    $pyinstallerArgs += @("--add-binary", "$ffmpegPath;.")
+    Write-Host "Bundling ffmpeg.exe inside the executable."
+} elseif ($App -eq "capture") {
+    throw "FFmpeg est introuvable. Le build NBCapture est annule pour eviter une version sans capture video."
 }
 
 python -m PyInstaller @pyinstallerArgs

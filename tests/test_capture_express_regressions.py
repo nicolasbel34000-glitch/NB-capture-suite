@@ -15,7 +15,7 @@ from PIL import Image
 
 import capture_express.app as app_module
 import capture_express.media as media_module
-from capture_express.app import CaptureExpressWindow, FloatingCaptureMenu
+from capture_express.app import CaptureExpressWindow, FloatingCaptureMenu, RegionOverlay
 from capture_express.media import (
     ClipRecorder,
     HardwareProfile,
@@ -70,6 +70,14 @@ class CaptureExpressRegressionTests(unittest.TestCase):
 
             self.assertEqual(left.getpixel((10, 10)), (255, 0, 0))
             self.assertEqual(right.getpixel((180, 10)), (255, 0, 0))
+
+    def test_region_preview_converts_both_physical_corners(self) -> None:
+        _app()
+        overlay = RegionOverlay()
+        with mock.patch.object(overlay, "_to_local", side_effect=[(10, 20), (160, 120)]):
+            rect = overlay._local_region_rect(CaptureRegion(100, 200, 300, 200))
+        self.assertEqual((rect.left(), rect.top(), rect.width(), rect.height()), (10, 20, 150, 100))
+        overlay.close()
 
     def test_prompter_excludes_paused_time_from_scroll_elapsed(self) -> None:
         _app()
@@ -174,6 +182,26 @@ class CaptureExpressRegressionTests(unittest.TestCase):
     def test_video_region_is_normalized_to_even_dimensions(self) -> None:
         recorder = ClipRecorder(Path("dummy.mp4"), region=CaptureRegion(10, 20, 301, 201), capture_format=CaptureFormat())
         self.assertEqual(recorder.region, CaptureRegion(10, 20, 300, 200))
+
+    def test_video_start_falls_back_to_software_encoder(self) -> None:
+        hardware = HardwareProfile(
+            tier="dedicated",
+            gpu_name="GPU test",
+            live_encoder=VideoEncoder("h264_nvenc", []),
+            summary="GPU",
+        )
+        with mock.patch.object(media_module, "probe_hardware_profile", return_value=hardware):
+            recorder = ClipRecorder(Path("dummy.mp4"), region=None, capture_format=CaptureFormat())
+        failed_process = mock.Mock()
+        with (
+            mock.patch.object(recorder, "_launch_all", side_effect=[[failed_process], [mock.Mock()]]),
+            mock.patch.object(recorder, "_failed_processes", side_effect=[[failed_process], []]),
+            mock.patch.object(recorder, "_tail_log", return_value="encoder failed"),
+            mock.patch.object(recorder, "stop"),
+            mock.patch.object(media_module.time, "sleep"),
+        ):
+            recorder.start()
+        self.assertEqual(recorder.hardware_profile.live_encoder.name, "libx264")
 
     def test_multitrack_recording_uses_separate_ffmpeg_processes(self) -> None:
         with mock.patch.object(media_module, "resolve_ffmpeg_bin", return_value="ffmpeg"):
