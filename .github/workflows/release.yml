@@ -28,6 +28,17 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests
 
+      - name: Install FFmpeg for packaging
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "ffmpeg.zip"
+          $extract = Join-Path $env:RUNNER_TEMP "ffmpeg"
+          Invoke-WebRequest "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile $archive
+          Expand-Archive -LiteralPath $archive -DestinationPath $extract -Force
+          $ffmpeg = Get-ChildItem -LiteralPath $extract -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          if (-not $ffmpeg) { throw "ffmpeg.exe not found in downloaded archive" }
+          (Split-Path -Parent $ffmpeg.FullName) | Out-File -FilePath $env:GITHUB_PATH -Append
+
       - name: Build NB Capture
         run: powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -App capture -Name NBCapture
 
