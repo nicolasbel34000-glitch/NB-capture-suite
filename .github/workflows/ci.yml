@@ -33,7 +33,7 @@ jobs:
         run: powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1 -App subtitles-cloud -Name NBSousTitres
 
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nb-capture-suite-windows
           path: release/*.exe
